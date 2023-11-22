@@ -11,7 +11,7 @@ const root = createRoot(container);
 
 const router = createBrowserRouter([
   {
-    path: "/",
+    path: import.meta.env.BASE_URL,
     element: <App />,
     children: routes,
     errorElement: <div>error</div>,
