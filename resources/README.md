@@ -1,0 +1,1 @@
+This folder includes code from https://github.com/tcgone/carddb/tree/master/data/src/main/resources, which is licensed under the Apache License, Version 2.0. The original copyright notice and license text can be found in the LICENSE file.
