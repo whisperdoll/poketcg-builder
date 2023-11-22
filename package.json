@@ -1,6 +1,7 @@
 {
   "name": "template",
   "version": "0.0.0",
+  "homepage": "https://www.whisperdoll.love/poketcg-builder/",
   "type": "module",
   "scripts": {
     "build": "turbo vite.build",
