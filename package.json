@@ -9,8 +9,8 @@
     "lint": "tsc",
     "prepare": "is-ci || husky install",
     "preview": "turbo vite.preview",
-    "vite.build": "vite build --base=/poketcg-builder/",
-    "vite.dev": "vite --host",
+    "vite.build": "vite build",
+    "vite.dev": "vite --host --base=/",
     "vite.preview": "vite preview"
   },
   "lint-staged": {

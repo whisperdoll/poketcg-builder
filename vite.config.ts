@@ -4,7 +4,7 @@ import mkcert from "vite-plugin-mkcert";
 import tsPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-  base: "./",
+  base: "/poketcg-builder/",
   server: {
     https: true,
     port: 5173,
