@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import CardCloseup from "./cardCloseup";
 import DeckCard from "./deckCard";
 
@@ -15,6 +15,11 @@ interface Props {
 export default function Deck(props: Props) {
   const { cards, setCards } = props;
   const [popupCardId, setPopupCardId] = useState<string | null>(null);
+
+  const totalCards = useMemo(
+    () => cards.reduce((acc, card) => acc + card.amount, 0),
+    [cards],
+  );
 
   function add(id: string) {
     setCards(
@@ -46,7 +51,7 @@ export default function Deck(props: Props) {
         />
       )}
       <div className="flex min-h-0 min-w-[15vw] max-w-[15vw] flex-col gap-1">
-        <h2 className="text-xl">Deck</h2>
+        <h2 className="text-xl">Deck ({totalCards}/60)</h2>
         {props.cards.length === 0 && <>Add some cards perhaps...</>}
         {props.cards.length > 0 && (
           <div className="overflow-auto border">
