@@ -1,5 +1,5 @@
 import { Deck, exportDeck } from "@/lib/deck";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import cards from "../resources/cards";
 import sets from "../resources/sets";
 import types from "../resources/types";
@@ -15,6 +15,17 @@ export default function CardCloseup(props: Props) {
   const { cardId, onClose } = props;
 
   const card = useMemo(() => cards[cardId], [cardId]);
+
+  useEffect(() => {
+    const fn = (e: KeyboardEvent) => {
+      if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", fn);
+
+    return () => document.removeEventListener("keydown", fn);
+  }, [onClose]);
 
   return (
     <div

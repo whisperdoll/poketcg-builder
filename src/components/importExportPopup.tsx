@@ -1,5 +1,5 @@
 import { Deck, exportDeck, importDeck } from "@/lib/deck";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 interface Props {
   deck: Deck;
@@ -16,6 +16,17 @@ export default function ImportExportPopup(props: Props) {
   function handleAccept() {
     props.onAccept(importDeck(text.split("\n")));
   }
+
+  useEffect(() => {
+    const fn = (e: KeyboardEvent) => {
+      if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", fn);
+
+    return () => document.removeEventListener("keydown", fn);
+  }, [onClose]);
 
   return (
     <div className="absolute left-0 top-0 z-10 flex h-[100%] w-[100%] flex-col bg-[rgba(0,0,0,0.5)] p-4">
