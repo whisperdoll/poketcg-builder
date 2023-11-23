@@ -5,6 +5,11 @@ export interface ISet {
   name: string;
   enumId: string;
   abbr: string;
+  ogAbbr?: string;
+  officialCount?: number;
+  seoName?: string;
+  pioId?: string;
+  notImplemented?: boolean;
 }
 
 const sets: Record<string, ISet> = {
@@ -5098,7 +5103,8 @@ const sets: Record<string, ISet> = {
     id: "216",
     name: "FireRed & LeafGreen",
     enumId: "FIRERED_LEAFGREEN",
-    abbr: "FRLG",
+    abbr: "RG",
+    ogAbbr: "FRLG",
   },
   "217": {
     cards: [
