@@ -11,6 +11,7 @@ interface Props {
   className?: string;
   containerClassName?: string;
   cardProps?: Record<string, any>;
+  large?: boolean;
 }
 
 export default function Card(props: Props) {
@@ -30,7 +31,7 @@ export default function Card(props: Props) {
     >
       <img
         className={"bg-slate-100 " + (props.className || "")}
-        src={`cards/${card.id}.jpg`}
+        src={`cards/${props.large ? "large/" : ""}${card.id}.jpg`}
         onClick={props.onClick}
         onContextMenu={props.onContextMenu}
         {...props.cardProps}

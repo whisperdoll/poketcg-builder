@@ -26,6 +26,7 @@ export default function CardCloseup(props: Props) {
         className="h-full"
         id={cardId}
         onClick={(e) => e.stopPropagation()}
+        large
       />
       <div
         onClick={(e) => e.stopPropagation()}
