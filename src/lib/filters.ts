@@ -473,11 +473,13 @@ export interface Filters {
   subType?: string;
   type?: string;
   hp: { comparator: ">" | "<" | ">=" | "<=" | "="; value: string };
+  moveType: { type: string; includeColorless: boolean };
 }
 
 export const DEFAULT_FILTERS: Filters = {
   searchText: "",
   hp: { comparator: "=", value: "" },
+  moveType: { type: "", includeColorless: false },
 };
 
 export function filteredCards(filters: Filters) {
@@ -542,13 +544,23 @@ export function filteredCards(filters: Filters) {
       !filters.hp.value ||
       numericCompare(card.hp, `${filters.hp.comparator}${filters.hp.value}`);
 
+    let matchesMoveType = true;
+
+    if (filters.moveType.type) {
+      const moveTypes = new Set((card.moves || []).map((m) => m.cost).flat());
+      matchesMoveType =
+        (filters.moveType.includeColorless && moveTypes.has("C")) ||
+        moveTypes.has(filters.moveType.type.toUpperCase());
+    }
+
     return (
       matchesSearchText &&
       matchesFormat &&
       matchesSuperType &&
       matchesSubType &&
       matchesType &&
-      matchesHp
+      matchesHp &&
+      matchesMoveType
     );
   });
 }

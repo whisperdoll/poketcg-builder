@@ -158,6 +158,49 @@ export default function Filters(props: Props) {
         </select>
       </div>
 
+      <div className="flex flex-row items-center gap-2 whitespace-nowrap">
+        <span>Move Type:</span>
+        <select
+          value={props.filters.moveType.type || ""}
+          onChange={(e) =>
+            props.setFilters({
+              ...props.filters,
+              moveType: {
+                ...props.filters.moveType,
+                type: e.currentTarget.value,
+              },
+            })
+          }
+          className="border p-1"
+        >
+          <option value="">Any</option>
+          {Object.entries(types).map(([value, typeName]) => (
+            <option key={value} value={value}>
+              {typeName}
+            </option>
+          ))}
+        </select>
+        <div className="flex flex-row">
+          <input
+            type="checkbox"
+            id="includeColorless"
+            checked={props.filters.moveType.includeColorless}
+            onChange={() =>
+              props.setFilters({
+                ...props.filters,
+                moveType: {
+                  ...props.filters.moveType,
+                  includeColorless: !props.filters.moveType.includeColorless,
+                },
+              })
+            }
+          />
+          <label className="cursor-pointer pl-1" htmlFor="includeColorless">
+            Include colorless
+          </label>
+        </div>
+      </div>
+
       <div>ℹ️ Click a card below to add it to your deck</div>
       <div>ℹ️ Right-click a card to view it up close</div>
     </div>

@@ -17,7 +17,7 @@ export default function DeckCard(props: Props) {
   const text = `${card.name} [${card.pioId.toUpperCase()}]`;
 
   return (
-    <div className="flow flex p-1 even:bg-slate-100">
+    <div className="flow flex items-center p-1 even:bg-slate-100">
       <span
         className="mr-4 cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap"
         onClick={onClick}
