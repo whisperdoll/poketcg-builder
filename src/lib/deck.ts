@@ -23,17 +23,27 @@ export function importDeck(lines: string[]) {
 
   lines.forEach((line) => {
     const parts = line.split(" ");
-    const amount = parseInt(parts[1]);
-    const number = parts[parts.length - 1];
-    const setAbbr = parts[parts.length - 2];
+    if (parts[0] === "*") {
+      parts.splice(0, 1);
+    }
 
+    const amount = parseInt(parts[0]);
+    let number = parts[parts.length - 1];
+    let setAbbr = parts[parts.length - 2];
+
+    if (number.endsWith(")")) {
+      number = number.substr(0, number.length - 1);
+    }
+    if (setAbbr.startsWith("(")) {
+      setAbbr = setAbbr.substr(1);
+    }
     const set = Object.values(sets).find((s) => s.abbr === setAbbr);
-    if (!set) return deck;
+    if (!set) return;
 
     const card = Object.values(cards).find(
       (c) => c.id.split("-")[0] === set.id && c.number === number,
     );
-    if (!card) return deck;
+    if (!card) return;
 
     deck.push({ amount, cardId: card.id });
   });
