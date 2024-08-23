@@ -474,20 +474,26 @@ export interface Filters {
   type?: string;
   hp: { comparator: ">" | "<" | ">=" | "<=" | "="; value: string };
   moveType: { type: string; includeColorless: boolean };
+  favoritesOnly: boolean;
 }
 
 export const DEFAULT_FILTERS: Filters = {
   searchText: "",
   hp: { comparator: "=", value: "" },
   moveType: { type: "", includeColorless: false },
+  favoritesOnly: false,
 };
 
 export function filteredCards(filters: Filters) {
-  // format
+  const favorites = JSON.parse(
+    localStorage.getItem("favorites") || "[]",
+  ) as string[];
   const format = filters.format && formats[filters.format];
   const type = filters.type;
 
   return Object.values(cards).filter((card) => {
+    if (filters.favoritesOnly && !favorites.includes(card.id)) return false;
+
     const s = (str: string | number) =>
       str.toString().toLowerCase().replace(/é/g, "e");
 

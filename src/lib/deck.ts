@@ -1,12 +1,18 @@
 import cards, { ICard } from "../resources/cards";
 import sets from "../resources/sets";
 
+export type CardId = string;
+
 interface CardSlot {
-  cardId: string;
+  cardId: CardId;
   amount: number;
 }
 
 export type Deck = CardSlot[];
+
+export function sortDeck(deck: Deck) {
+  return deck.sort((a, b) => a.cardId.localeCompare(b.cardId));
+}
 
 function exportCard(cardSlot: CardSlot) {
   const card = cards[cardSlot.cardId];
@@ -15,7 +21,7 @@ function exportCard(cardSlot: CardSlot) {
 }
 
 export function exportDeck(deck: Deck) {
-  return deck.map(exportCard).join("\n");
+  return sortDeck(deck).map(exportCard).join("\n");
 }
 
 export function importDeck(lines: string[]) {
@@ -48,5 +54,5 @@ export function importDeck(lines: string[]) {
     deck.push({ amount, cardId: card.id });
   });
 
-  return deck;
+  return sortDeck(deck);
 }

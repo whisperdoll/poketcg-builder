@@ -1,25 +1,37 @@
 import { Deck, exportDeck } from "@/lib/deck";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import cards from "../resources/cards";
 import sets from "../resources/sets";
 import types from "../resources/types";
-import Card from "./card";
+import Card, { CardHeight, CardWidth } from "./card";
 import TypeWithHint from "./typeWithHint";
 
 interface Props {
   cardId: string;
   onClose: () => any;
+  onNavigatePrev?: () => any;
+  onNavigateNext?: () => any;
 }
 
 export default function CardCloseup(props: Props) {
-  const { cardId, onClose } = props;
+  const { cardId, onClose, onNavigatePrev, onNavigateNext } = props;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [cardDisplaySize, setCardDisplaySize] = useState({
+    width: 0,
+    height: 0,
+  });
 
   const card = useMemo(() => cards[cardId], [cardId]);
 
   useEffect(() => {
     const fn = (e: KeyboardEvent) => {
+      console.log(e.key);
       if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
         onClose();
+      } else if (e.key === "ArrowLeft") {
+        onNavigatePrev && onNavigatePrev();
+      } else if (e.key === "ArrowRight") {
+        onNavigateNext && onNavigateNext();
       }
     };
     document.addEventListener("keydown", fn);
@@ -27,8 +39,30 @@ export default function CardCloseup(props: Props) {
     return () => document.removeEventListener("keydown", fn);
   }, [onClose]);
 
+  useLayoutEffect(() => {
+    const onResize = () => {
+      if (!containerRef.current) return;
+
+      const size = containerRef.current.getBoundingClientRect();
+      const heightRatio = size.height / CardHeight;
+      const cardDisplayWidth = CardWidth * heightRatio;
+      const cardDisplayHeight = size.height;
+      setCardDisplaySize({
+        width: cardDisplayWidth,
+        height: cardDisplayHeight,
+      });
+    };
+
+    onResize();
+
+    window.addEventListener("resize", onResize);
+
+    return () => window.removeEventListener("resize", onResize);
+  }, [setCardDisplaySize]);
+
   return (
     <div
+      ref={containerRef}
       onClick={onClose}
       className="absolute left-0 top-0 z-10 flex h-[100%] w-[100%] flex-row bg-[rgba(0,0,0,0.5)] p-8"
     >
@@ -38,6 +72,10 @@ export default function CardCloseup(props: Props) {
         id={cardId}
         onClick={(e) => e.stopPropagation()}
         large
+        cardProps={{
+          width: cardDisplaySize.width,
+          height: cardDisplaySize.height,
+        }}
       />
       <div
         onClick={(e) => e.stopPropagation()}
@@ -61,7 +99,7 @@ export default function CardCloseup(props: Props) {
             <h3 className="text-2xl">
               Types:{" "}
               {card.types.map((t) => (
-                <TypeWithHint type={t as keyof typeof types} />
+                <TypeWithHint type={t as keyof typeof types} key={t} />
               ))}
             </h3>
           )}
@@ -71,7 +109,7 @@ export default function CardCloseup(props: Props) {
               <h3 className="text-2xl">Abilities</h3>
               <ul className="list-disc pl-5">
                 {card.abilities.map((ability) => (
-                  <li>
+                  <li key={ability.name}>
                     <h4 className="text-xl">
                       {ability.type}: {ability.name}
                     </h4>
@@ -86,7 +124,7 @@ export default function CardCloseup(props: Props) {
               <h3 className="text-2xl">Moves</h3>
               <ul className="list-disc pl-5">
                 {card.moves.map((move) => (
-                  <li>
+                  <li key={move.name}>
                     <h4 className="text-xl">{move.name}</h4>
                     <div>
                       Cost:{" "}

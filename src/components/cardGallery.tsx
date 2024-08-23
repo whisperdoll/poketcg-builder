@@ -40,17 +40,21 @@ const GalleryCard = memo((props: GalleryCardProps) => {
   const index = props.rowIndex * props.data.columnCount + props.columnIndex;
   const card = props.data.filteredCards[index];
   return card ? (
-    <Card
-      id={card.id}
+    <div
       style={{ ...props.style }}
-      onClick={(e) => props.data.onClick(e, card.id)}
-      onContextMenu={(e) => {
-        e.preventDefault();
-        props.data.onClick(e, card.id);
-      }}
-      className="transform cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
-      cardProps={{ width: cardWidth, height: cardHeight }}
-    />
+      className="flex flex-col items-center justify-center"
+    >
+      <Card
+        id={card.id}
+        onClick={(e) => props.data.onClick(e, card.id)}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          props.data.onClick(e, card.id);
+        }}
+        containerClassName="transform cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
+        cardProps={{ width: cardWidth, height: cardHeight }}
+      />
+    </div>
   ) : null;
 }, areEqual);
 
@@ -93,6 +97,20 @@ export default function CardGallery(props: Props) {
     }
   }
 
+  function navigatePrev() {
+    const currentIndex = filteredCards.findIndex((c) => c.id === popupCardId);
+    if (currentIndex === -1) return;
+    setPopupCardId(filteredCards.at(currentIndex - 1)!.id);
+  }
+
+  function navigateNext() {
+    const currentIndex = filteredCards.findIndex((c) => c.id === popupCardId);
+    if (currentIndex === -1) return;
+    setPopupCardId(
+      filteredCards.at((currentIndex + 1) % filteredCards.length)!.id,
+    );
+  }
+
   function onPopupCardClose() {
     setPopupCardId(null);
   }
@@ -100,7 +118,12 @@ export default function CardGallery(props: Props) {
   return (
     <>
       {popupCardId && (
-        <CardCloseup cardId={popupCardId} onClose={onPopupCardClose} />
+        <CardCloseup
+          cardId={popupCardId}
+          onClose={onPopupCardClose}
+          onNavigateNext={navigateNext}
+          onNavigatePrev={navigatePrev}
+        />
       )}
       <div className="grow border">
         {filteredCards.length === 0 && (

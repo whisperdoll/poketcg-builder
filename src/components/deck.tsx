@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import CardCloseup from "./cardCloseup";
 import DeckCard from "./deckCard";
+import { sortDeck } from "@/lib/deck";
 
 interface CardSlot {
   cardId: string;
@@ -20,6 +21,8 @@ export default function Deck(props: Props) {
     () => cards.reduce((acc, card) => acc + card.amount, 0),
     [cards],
   );
+
+  const sortedCards = useMemo(() => sortDeck(cards), [cards]);
 
   function add(id: string) {
     setCards(
@@ -50,12 +53,12 @@ export default function Deck(props: Props) {
           onClose={() => setPopupCardId(null)}
         />
       )}
-      <div className="flex min-h-0 min-w-[15vw] max-w-[15vw] flex-col gap-1">
+      <div className="flex min-h-0 flex-col gap-1">
         <h2 className="text-xl">Deck ({totalCards}/60)</h2>
         {props.cards.length === 0 && <>Add some cards perhaps...</>}
         {props.cards.length > 0 && (
           <div className="overflow-auto border">
-            {props.cards.map((card) => (
+            {sortedCards.map((card) => (
               <DeckCard
                 key={card.cardId}
                 cardId={card.cardId}

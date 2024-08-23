@@ -4,11 +4,11 @@ import sets from "../resources/sets";
 import formats from "../resources/formats";
 import types from "../resources/types";
 import Filter from "./filter";
-import { Filters, filterEnums } from "@/lib/filters";
+import { Filters as FiltersType, filterEnums } from "@/lib/filters";
 
 interface Props {
-  filters: Filters;
-  setFilters: React.Dispatch<React.SetStateAction<Filters>>;
+  filters: FiltersType;
+  setFilters: React.Dispatch<React.SetStateAction<FiltersType>>;
 }
 
 export default function Filters(props: Props) {
@@ -196,9 +196,26 @@ export default function Filters(props: Props) {
             }
           />
           <label className="cursor-pointer pl-1" htmlFor="includeColorless">
-            Include colorless
+            Include Colorless
           </label>
         </div>
+      </div>
+
+      <div className="flex flex-row">
+        <input
+          type="checkbox"
+          id="favoritesOnly"
+          checked={props.filters.favoritesOnly}
+          onChange={() =>
+            props.setFilters({
+              ...props.filters,
+              favoritesOnly: !props.filters.favoritesOnly,
+            })
+          }
+        />
+        <label className="cursor-pointer pl-1" htmlFor="favoritesOnly">
+          Favorites Only
+        </label>
       </div>
 
       <div>ℹ️ Click a card below to add it to your deck</div>
