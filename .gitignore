@@ -135,5 +135,6 @@ dist
 .turbo
 
 tools/*.json
+tools/*.xml
 
 .vscode/settings.json
