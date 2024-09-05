@@ -1,6 +1,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import {
+  createBrowserRouter,
+  createHashRouter,
+  RouterProvider,
+} from "react-router-dom";
 import routes from "@/routes";
 import App from "@/App";
 import "@/global";
@@ -9,14 +13,17 @@ const container = document.getElementById("root") as HTMLElement;
 
 const root = createRoot(container);
 
-const router = createBrowserRouter([
-  {
-    path: import.meta.env.BASE_URL,
-    element: <App />,
-    children: routes,
-    errorElement: <div>error</div>,
-  },
-]);
+const router = (window.r = createHashRouter(
+  [
+    {
+      path: "/",
+      element: <App />,
+      children: routes,
+      errorElement: <div>error</div>,
+    },
+  ],
+  { basename: "/" },
+));
 
 root.render(
   <StrictMode>

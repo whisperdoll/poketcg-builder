@@ -28,12 +28,19 @@ export default function ImportExportPopup(props: Props) {
     return () => document.removeEventListener("keydown", fn);
   }, [onClose]);
 
+  function removeAsterisks() {
+    setText(text.replace(/^\* /gm, ""));
+  }
+
   return (
     <div className="absolute left-0 top-0 z-10 flex h-[100%] w-[100%] flex-col bg-[rgba(0,0,0,0.5)] p-4">
       <div className="flex h-[100%]  w-[100%] flex-col flex-col gap-1 rounded bg-white p-4">
-        <div className="flex flex-row">
+        <div className="flex flex-row items-center gap-4">
           <h2>Import/Export</h2>
-          <button className="ml-auto border" onClick={() => onClose()}>
+          <button className="border px-1" onClick={removeAsterisks}>
+            Remove Asterisks
+          </button>
+          <button className="ml-auto border px-1" onClick={() => onClose()}>
             [Close]
           </button>
         </div>

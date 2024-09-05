@@ -19,18 +19,20 @@ import { useParams, useSearchParams } from "react-router-dom";
 type Board = { card: ICard; selectedBy: string | null }[];
 
 export default function Draft() {
-  const { format: formatId, seed } = useParams();
+  const urlParams = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const deckSize = parseInt(searchParams.get("decksize") || "40");
   const [round, setRound] = useState(0);
-  const numRounds = tryParseInt(searchParams.get("rounds"), 2);
+  const numRounds = tryParseInt(searchParams.get("rounds"), deckSize / 2);
   const numPokemon = tryParseInt(searchParams.get("pokemon"), 4);
   const numTrainers = tryParseInt(searchParams.get("trainers"), 2);
   const numPlayers = tryParseInt(searchParams.get("players"), 2);
   const numPicksPerPlayer = tryParseInt(searchParams.get("picks"), 2);
   const numPicksPerRound = numPicksPerPlayer * numPlayers;
-  const format = formats[formatId?.toUpperCase() || ""];
-  const rngGenerator = useMemo(() => splitmix32(parseInt(seed!)), [seed]);
+  const format =
+    formats[urlParams.format?.toUpperCase().replace(/-/g, "_") || ""];
+  const seed = tryParseInt(urlParams.seed, 0);
+  const rngGenerator = useMemo(() => splitmix32(seed), [seed]);
   const [boardState, setBoardState] = useState<Board>([]);
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(
     null,
@@ -52,6 +54,7 @@ export default function Draft() {
     if (round + 1 === numRounds) {
       setDone(true);
     } else {
+      setPlayerTurn((round + 1) % numPlayers);
       setRound(round + 1);
       setBoardState(generateBoard());
     }
@@ -137,7 +140,7 @@ export default function Draft() {
   ) : (
     <div className="flex h-full w-full flex-col gap-4 overflow-hidden p-4">
       <h1>
-        Round {round}/{numRounds}, Player {playerTurn + 1} to choose
+        Round {round + 1}/{numRounds}, Player {playerTurn + 1} to choose
       </h1>
       <div className="flex max-h-[30%] flex-row gap-4">
         {boardState.map(({ card, selectedBy }, i) => (

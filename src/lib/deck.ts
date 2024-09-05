@@ -28,7 +28,7 @@ export function importDeck(lines: string[]) {
   const deck: Deck = [];
 
   lines.forEach((line) => {
-    const parts = line.split(" ");
+    const parts = line.trim().split(" ");
     if (parts[0] === "*") {
       parts.splice(0, 1);
     }
