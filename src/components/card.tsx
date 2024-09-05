@@ -70,7 +70,9 @@ export default function Card(props: Props) {
           `bg-slate-100 aspect-[${CardWidth}/${CardHeight}] ` +
           (props.className || "")
         }
-        src={`cards/${props.large ? "large/" : ""}${card.id}.jpg`}
+        src={`/poketcg-builder/cards/${props.large ? "large/" : ""}${
+          card.id
+        }.jpg`}
         onClick={props.onClick}
         onContextMenu={props.onContextMenu}
         title={cardText}

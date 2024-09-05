@@ -1,17 +1,18 @@
-import { useMemo, useState } from "react";
+import { PropsWithChildren, useMemo, useState } from "react";
 import cards, { ICard } from "../resources/cards";
 import sets from "../resources/sets";
 import formats from "../resources/formats";
 import types from "../resources/types";
 import Filter from "./filter";
 import { Filters as FiltersType, filterEnums } from "@/lib/filters";
+import Slot from "./slot";
 
 interface Props {
   filters: FiltersType;
   setFilters: React.Dispatch<React.SetStateAction<FiltersType>>;
 }
 
-export default function Filters(props: Props) {
+export default function Filters(props: PropsWithChildren<Props>) {
   const hps = useMemo(
     () =>
       Object.values(cards)
@@ -218,8 +219,7 @@ export default function Filters(props: Props) {
         </label>
       </div>
 
-      <div>ℹ️ Click a card below to add it to your deck</div>
-      <div>ℹ️ Right-click a card to view it up close</div>
+      <Slot name="after">{props.children}</Slot>
     </div>
   );
 }

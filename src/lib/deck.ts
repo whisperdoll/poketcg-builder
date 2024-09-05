@@ -56,3 +56,19 @@ export function importDeck(lines: string[]) {
 
   return sortDeck(deck);
 }
+
+export function countDeck(deck: Deck) {
+  return deck.reduce((acc, card) => acc + card.amount, 0);
+}
+
+export function addToDeck(deck: Deck, cardId: string): Deck {
+  const existing = deck.some((c) => c.cardId === cardId);
+
+  if (existing) {
+    return deck.map((c) =>
+      c.cardId === cardId ? { cardId, amount: c.amount + 1 } : c,
+    );
+  } else {
+    return [...deck, { cardId, amount: 1 }];
+  }
+}

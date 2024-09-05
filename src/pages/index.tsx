@@ -8,7 +8,7 @@ import CardGallery from "@/components/cardGallery";
 import { DEFAULT_FILTERS } from "@/lib/filters";
 import ImportExportPopup from "@/components/importExportPopup";
 import useLocalStorage from "@/hooks/useLocalStorage";
-import { CardId, sortDeck } from "@/lib/deck";
+import { addToDeck, CardId, sortDeck } from "@/lib/deck";
 
 type Deck = { cardId: string; amount: number }[];
 type DeckSave = { name: string; cards: Deck; format: string | undefined };
@@ -38,17 +38,7 @@ export default function Index() {
 
   const addCard = useCallback(
     (id: string) => {
-      setDeck((deck) => {
-        const existing = deck.some((c) => c.cardId === id);
-
-        if (existing) {
-          return deck.map((c) =>
-            c.cardId === id ? { cardId: id, amount: c.amount + 1 } : c,
-          );
-        } else {
-          return [...deck, { cardId: id, amount: 1 }];
-        }
-      });
+      setDeck((deck) => addToDeck(deck, id));
     },
     [setDeck],
   );
@@ -172,7 +162,10 @@ export default function Index() {
           <Deck cards={deck} setCards={setDeck} />
         </div>
         <div className="flex flex-col gap-4">
-          <Filters filters={filters} setFilters={setFilters} />
+          <Filters filters={filters} setFilters={setFilters}>
+            <div slot="after">ℹ️ Click a card below to add it to your deck</div>
+            <div slot="after">ℹ️ Right-click a card to view it up close</div>
+          </Filters>
           <CardGallery filters={filters} addCard={addCard} />
         </div>
       </div>

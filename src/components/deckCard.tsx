@@ -31,12 +31,16 @@ export default function DeckCard(props: Props) {
       </span>
       <div className="ml-auto flex gap-1">
         <span>x{amount}</span>
-        <button className="border px-1" onClick={() => remove && remove()}>
-          -
-        </button>
-        <button className="border px-1" onClick={() => add && add()}>
-          +
-        </button>
+        {remove && (
+          <button className="border px-1" onClick={() => remove()}>
+            -
+          </button>
+        )}
+        {add && (
+          <button className="border px-1" onClick={() => add()}>
+            +
+          </button>
+        )}
       </div>
     </div>
   );

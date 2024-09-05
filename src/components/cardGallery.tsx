@@ -19,7 +19,7 @@ const cardHeight = 314;
 
 interface Props {
   filters: Filters;
-  addCard: (cardId: string) => any;
+  addCard?: (cardId: string) => any;
 }
 
 interface GalleryCardProps {
@@ -89,9 +89,12 @@ export default function CardGallery(props: Props) {
     e: React.MouseEvent<HTMLImageElement, MouseEvent>,
     cardId: string,
   ) {
-    console.log(e.button);
     if (e.button === 0) {
-      props.addCard(cardId);
+      if (props.addCard) {
+        props.addCard(cardId);
+      } else {
+        setPopupCardId(cardId);
+      }
     } else if (e.button === 2) {
       setPopupCardId(cardId);
     }
