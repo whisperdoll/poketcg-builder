@@ -1,41 +1,76 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import cards, { ICard } from "../resources/cards";
-import sets from "../resources/sets";
-import useIsOnScreen from "@/hooks/useIsOnScreen";
+import {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
+import type { ICard } from "../resources/cards";
+import cards from "../resources/cards";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar as outlineStar } from "@fortawesome/free-regular-svg-icons";
 import { faStar as solidStar } from "@fortawesome/free-solid-svg-icons";
 import useLocalStorage from "@/hooks/useLocalStorage";
-import { CardId } from "@/lib/deck";
+import type { CardId } from "@/lib/deck";
+import { mergeRefs } from "@/lib/react-utils";
+import cx from "@/lib/cx";
 
 export const CardWidth = 225;
 export const CardHeight = 314;
 
-interface Props {
-  id: string;
-  onClick?: (e: React.MouseEvent<HTMLImageElement, MouseEvent>) => any;
-  onContextMenu?: (e: React.MouseEvent<HTMLImageElement, MouseEvent>) => any;
-  style?: any;
-  className?: string;
-  containerClassName?: string;
-  cardProps?: Record<string, any>;
+export type CardProps = {
+  containerProps?: React.HTMLAttributes<HTMLDivElement>;
+  cardProps?: React.ImgHTMLAttributes<HTMLImageElement>;
   large?: boolean;
-}
+  id?: string;
+  back?: boolean;
+  onHoverChange?: (
+    hovering: boolean,
+    cardElement: HTMLImageElement,
+    containerElement: HTMLDivElement,
+  ) => unknown;
+  hideFavIcon?: boolean;
+  containerRef?: React.MutableRefObject<HTMLDivElement | undefined>;
+};
 
-export default function Card(props: Props) {
-  const [hovering, setHovering] = useState(false);
-  const card = useMemo<ICard | undefined>(() => cards[props.id], [props.id]);
+export default function Card(
+  props: React.PropsWithRef<React.PropsWithChildren<CardProps>>,
+) {
+  const [hovering, _setHovering] = useState(false);
+  const card = useMemo<ICard | undefined>(
+    () => (props.id ? cards[props.id] : undefined),
+    [props.id],
+  );
   const showTooltip = false;
   const [_favorites, setFavorites] = useLocalStorage<CardId[]>("favorites", []);
   const favorites = _favorites || [];
-  const isFavorited = favorites.includes(props.id);
-  const showFavIcon = isFavorited || hovering;
+  const isFavorited = !!props.id && favorites.includes(props.id);
+  const showFavIcon =
+    !props.hideFavIcon && !props.back && (isFavorited || hovering);
+  const containerRef = useRef<HTMLImageElement>(null);
+  const cardRef = useRef<HTMLImageElement>(null);
 
-  if (!card) {
+  if (!card && !props.back) {
     throw new Error("bad id for card: " + props.id);
   }
 
+  const { onHoverChange } = props;
+
+  const setHovering = useCallback(
+    (hovering: boolean) => {
+      _setHovering(hovering);
+
+      if (cardRef.current && containerRef.current) {
+        onHoverChange &&
+          onHoverChange(hovering, cardRef.current, containerRef.current);
+      }
+    },
+    [_setHovering, onHoverChange],
+  );
+
   function toggleFavorite() {
+    if (!props.id) return;
+
     if (isFavorited) {
       const copy = favorites.slice(0);
       copy.splice(copy.indexOf(props.id), 1);
@@ -45,48 +80,58 @@ export default function Card(props: Props) {
     }
   }
 
-  const cardText = showTooltip
-    ? `
+  const cardText =
+    showTooltip && card && !props.back
+      ? `
     ${card.name} [${card.superType}] ${
       card.subTypes && `[${card.subTypes.join(", ")}]`
     }
 
     ${card.text && card.text.join("\n\n")}
   `.replace(/^[ \t]+(.+)$/gm, "$1")
-    : undefined;
+      : undefined;
 
   return (
     <div
-      style={props.style}
-      className={
-        "relative flex flex-col items-end justify-start " +
-        (props.containerClassName || "")
-      }
-      onMouseEnter={() => setHovering(true)}
-      onMouseLeave={() => setHovering(false)}
+      {...props.containerProps}
+      ref={mergeRefs(containerRef, props.containerRef)}
+      className={cx("card", props.containerProps?.className)}
+      style={{
+        ...props.containerProps?.style,
+      }}
     >
       <img
-        className={
-          `bg-slate-100 aspect-[${CardWidth}/${CardHeight}] ` +
-          (props.className || "")
+        onMouseEnter={() => setHovering(true)}
+        onMouseLeave={() => setHovering(false)}
+        ref={cardRef}
+        src={
+          !card || props.back
+            ? `/poketcg-builder/cards/back.jpg`
+            : `/poketcg-builder/cards/${false ? "large/" : "webp/"}${
+                card.id
+              }.${false ? "jpg" : "webp"}`
         }
-        src={`/poketcg-builder/cards/${props.large ? "large/" : ""}${
-          card.id
-        }.jpg`}
-        onClick={props.onClick}
-        onContextMenu={props.onContextMenu}
         title={cardText}
-        key={card.id}
+        draggable={false}
         {...props.cardProps}
       ></img>
-      <FontAwesomeIcon
-        icon={isFavorited ? solidStar : outlineStar}
-        className="absolute right-1 top-1 cursor-pointer"
+      <button
+        onMouseEnter={() => setHovering(true)}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          toggleFavorite();
+        }}
+        className="favorite"
         title="Toggle Favorite"
-        size="lg"
         style={{ display: showFavIcon ? undefined : "none" }}
-        onClick={toggleFavorite}
-      />
+      >
+        <FontAwesomeIcon
+          icon={isFavorited ? solidStar : outlineStar}
+          size="lg"
+        />
+      </button>
+      {props.children}
     </div>
   );
 }

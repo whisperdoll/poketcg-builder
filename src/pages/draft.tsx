@@ -1,113 +1,58 @@
 import Card from "@/components/card";
+import CardCloseup from "@/components/cardCloseup";
 import Deck from "@/components/deck";
-import useStateAsyncInit from "@/hooks/useStateAsyncInit";
-import { addToDeck, exportDeck, Deck as IDeck } from "@/lib/deck";
+import DraftSelect from "@/components/draft-select";
+import useLocalStorage from "@/hooks/useLocalStorage";
+import cx from "@/lib/cx";
+import type { DeckSave, Deck as IDeck } from "@/lib/deck";
+import {
+  addToDeck,
+  cardsFromDeck,
+  deckFromCards,
+  exportDeck,
+} from "@/lib/deck";
+import type { Filters } from "@/lib/filters";
+import { DEFAULT_FILTERS, filteredCards } from "@/lib/filters";
 import {
   arrayFromGenerator,
   infiniteShuffledGenerator,
   splitmix32,
   tryParseInt,
 } from "@/lib/utils";
-import cards, { ICard } from "@/resources/cards";
-import formats from "@/resources/formats";
-import sets from "@/resources/sets";
-import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import type { ICard } from "@/resources/cards";
+import cards from "@/resources/cards";
+import { faArrowRight, faCheck } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useEffect, useMemo, useReducer, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams, useNavigate } from "react-router";
 
-type Board = { card: ICard; selectedBy: string | null }[];
+type Board = { card: ICard; added: boolean }[];
 
 export default function Draft() {
-  const urlParams = useParams();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, _setSearchParams] = useSearchParams();
   const deckSize = parseInt(searchParams.get("decksize") || "40");
   const [round, setRound] = useState(0);
+  const restrictEvos = searchParams.get("restrictEvos") === "true";
   const numRounds = tryParseInt(searchParams.get("rounds"), deckSize / 2);
   const numPokemon = tryParseInt(searchParams.get("pokemon"), 4);
   const numTrainers = tryParseInt(searchParams.get("trainers"), 2);
-  const numPlayers = tryParseInt(searchParams.get("players"), 2);
-  const numPicksPerPlayer = tryParseInt(searchParams.get("picks"), 2);
-  const numPicksPerRound = numPicksPerPlayer * numPlayers;
-  const format =
-    formats[urlParams.format?.toUpperCase().replace(/-/g, "_") || ""];
-  const seed = tryParseInt(urlParams.seed, 0);
+  const numPicks = tryParseInt(searchParams.get("picks"), 2);
+  const filters = JSON.parse(
+    searchParams.get("filters") || JSON.stringify(DEFAULT_FILTERS),
+  ) as Filters;
+  const seed = tryParseInt(searchParams.get("seed"), 0);
   const rngGenerator = useMemo(() => splitmix32(seed), [seed]);
-  const [boardState, setBoardState] = useState<Board>([]);
-  const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(
-    null,
-  );
-  const selectedCardId =
-    selectedCardIndex === null ? null : boardState[selectedCardIndex].card.id;
-  const [playerTurn, setPlayerTurn] = useState(0);
-  const [playerDecks, setPlayerDecks] = useStateAsyncInit<IDeck[]>(() =>
-    arrayFromGenerator<IDeck>(() => [], numPlayers),
-  );
+  const [popupCardIndex, setPopupCardIndex] = useState<number>(-1);
+  const [addedCards, setAddedCards] = useState<IDeck>([]);
   const [done, setDone] = useState(false);
-
-  function initBoard() {
-    setBoardState(generateBoard());
-  }
-  useEffect(initBoard, []);
-
-  function gotoNextRound() {
-    if (round + 1 === numRounds) {
-      setDone(true);
-    } else {
-      setPlayerTurn((round + 1) % numPlayers);
-      setRound(round + 1);
-      setBoardState(generateBoard());
-    }
-  }
-
-  function pickSelectedCard() {
-    if (selectedCardIndex === null) return;
-
-    const selectedBy = `Player ${playerTurn + 1}`;
-    const picksSoFar =
-      boardState.reduce((acc, slot) => acc + (slot.selectedBy ? 1 : 0), 0) + 1;
-    const isLastPick = picksSoFar === numPicksPerRound;
-
-    setPlayerDecks([
-      ...playerDecks.slice(0, playerTurn),
-      addToDeck(playerDecks[playerTurn], selectedCardId!),
-      ...playerDecks.slice(playerTurn + 1),
-    ]);
-    setPlayerTurn((playerTurn + 1) % numPlayers);
-
-    if (isLastPick) {
-      gotoNextRound();
-    } else {
-      setBoardState([
-        ...boardState.slice(0, selectedCardIndex),
-        { ...boardState[selectedCardIndex], selectedBy },
-        ...boardState.slice(selectedCardIndex + 1),
-      ]);
-    }
-  }
-
-  function generateBoard(): Board {
-    return [
-      ...arrayFromGenerator(drawPokemon, numPokemon),
-      ...arrayFromGenerator(drawTrainer, numTrainers),
-    ].map((card) => ({ card, selectedBy: null }));
-  }
-
-  const matchesFormat = (card: ICard) => {
-    const set = sets[card.id.split("-")[0]];
-    return (
-      !format ||
-      (!format.excludes.includes(card.id) &&
-        (format.expansions.map((e) => e.toString()).includes(set.id) ||
-          format.includes.includes(card.id)))
-    );
-  };
+  const navigate = useNavigate();
+  const [_decks, setDecks] = useLocalStorage<DeckSave[]>("decks", []);
+  const decks = _decks || [];
 
   const [pokemon, trainers] = useMemo(() => {
     const [pokemon, trainers]: [ICard[], ICard[]] = [[], []];
-    Object.values(cards).forEach((card) => {
-      if (!matchesFormat(card)) return;
-
+    const filtered = filteredCards(filters);
+    filtered.forEach((card) => {
       if (card.superType === "POKEMON") {
         pokemon.push(card);
       } else if (card.superType === "TRAINER") {
@@ -115,79 +60,192 @@ export default function Draft() {
       }
     });
     return [pokemon, trainers];
-  }, [format]);
+  }, [filters]);
 
-  const drawPokemon = useMemo(
+  const drawPokemonShuffler = useMemo(
     () => infiniteShuffledGenerator(pokemon, rngGenerator),
     [pokemon, rngGenerator],
   );
+
+  const drawPokemon = useCallback(() => {
+    while (true) {
+      const pokemon = drawPokemonShuffler();
+      if (!restrictEvos || !pokemon.evolvesFrom) return pokemon;
+
+      const hasPreEvo = addedCards.some(
+        (c) => cards[c.cardId].name === pokemon.evolvesFrom,
+      );
+      if (hasPreEvo) {
+        return pokemon;
+      }
+    }
+  }, [drawPokemonShuffler, addedCards, restrictEvos]);
+
   const drawTrainer = useMemo(
     () => infiniteShuffledGenerator(trainers, rngGenerator),
     [trainers, rngGenerator],
   );
 
-  return done ? (
-    <div className="flex h-full w-full flex-row gap-4 p-4">
-      {playerDecks.map((deck, i) => {
-        return (
-          <div key={i} className="flex grow flex-col">
-            <div>Player {i + 1}</div>
-            <textarea className="grow border" value={exportDeck(deck)} />
-          </div>
-        );
-      })}
-    </div>
-  ) : (
-    <div className="flex h-full w-full flex-col gap-4 overflow-hidden p-4">
-      <h1>
-        Round {round + 1}/{numRounds}, Player {playerTurn + 1} to choose
-      </h1>
-      <div className="flex max-h-[30%] flex-row gap-4">
-        {boardState.map(({ card, selectedBy }, i) => (
-          <Card
-            id={card.id}
-            key={card.id}
-            onClick={() => setSelectedCardIndex(i)}
-            cardProps={{ className: "h-full w-auto" }}
-            style={{
-              filter: !!selectedBy ? "grayscale(1) brightness(0.5)" : undefined,
-            }}
-          />
-        ))}
-      </div>
-      <div className="flex min-h-0 flex-row gap-4">
-        {selectedCardIndex !== null && (
-          <>
-            <Card
-              id={selectedCardId!}
-              large
-              cardProps={{ className: "h-full w-auto" }}
-            />
-            <div className="flex grow items-center justify-start">
-              <button
-                className="border px-1"
-                disabled={!!boardState[selectedCardIndex].selectedBy}
-                onClick={() => pickSelectedCard()}
-              >
-                Select <FontAwesomeIcon icon={faArrowRight} />
-              </button>
-            </div>
-          </>
-        )}
+  function generateBoard(): Board {
+    return [
+      ...arrayFromGenerator(drawPokemon, numPokemon),
+      ...arrayFromGenerator(drawTrainer, numTrainers),
+    ].map((card) => ({ card, added: false }));
+  }
 
-        <div className="flex grow flex-row justify-start gap-4">
-          {playerDecks.map((playerDeck, i) => (
-            <div
-              key={i}
-              className={`flex flex-col border px-1 ${
-                playerTurn === i ? "outline outline-1 outline-blue-500" : ""
-              }`}
+  const [boardState, setBoardState] = useState<Board>(generateBoard);
+  const numPicked = boardState.reduce((acc, slot) => acc + +slot.added, 0);
+
+  function navigatePrev() {
+    const currentIndex = popupCardIndex;
+    if (currentIndex === -1) return;
+    setPopupCardIndex(
+      popupCardIndex === 0 ? boardState.length - 1 : popupCardIndex - 1,
+    );
+  }
+
+  function navigateNext() {
+    const currentIndex = popupCardIndex;
+    if (currentIndex === -1) return;
+    setPopupCardIndex(
+      popupCardIndex === boardState.length - 1 ? 0 : popupCardIndex + 1,
+    );
+  }
+
+  function saveAndGoToDeckBuilder(deck: IDeck) {
+    const date = new Date();
+    const dateString = `${date.getFullYear()}-${
+      date.getMonth() + 1
+    }-${date.getDate()} ${date.getHours()}:${date.getMinutes()}`;
+    const name = `Draft ${dateString}`;
+    setDecks([
+      ...decks,
+      {
+        cards: deck,
+        name,
+        formats: filters.formats,
+      },
+    ]);
+    navigate(`/?name=${encodeURIComponent(name)}`);
+  }
+
+  function gotoNextRound() {
+    setAddedCards(
+      addToDeck(
+        addedCards,
+        ...boardState.filter((b) => b.added).map((b) => b.card.id),
+      ),
+    );
+
+    if (round + 1 === numRounds) {
+      if (numPicks * numRounds <= deckSize) {
+        // no use in making them select every single card lol
+        saveAndGoToDeckBuilder(addedCards);
+      } else {
+        setDone(true);
+      }
+    } else {
+      setRound(round + 1);
+      setBoardState(generateBoard());
+    }
+  }
+
+  function togglePick(i: number) {
+    if (boardState[i].added) {
+      setBoardState([
+        ...boardState.slice(0, i),
+        { ...boardState[i], added: false },
+        ...boardState.slice(i + 1),
+      ]);
+    } else {
+      if (numPicked === numPicks) return;
+      setBoardState([
+        ...boardState.slice(0, i),
+        { ...boardState[i], added: true },
+        ...boardState.slice(i + 1),
+      ]);
+    }
+  }
+
+  const addedCardsAsCards = useMemo(
+    () => cardsFromDeck(addedCards).map((cid) => cards[cid]),
+    [addedCards],
+  );
+
+  return done ? (
+    <DraftSelect
+      cards={addedCardsAsCards}
+      max={deckSize}
+      onFinish={(cards) =>
+        saveAndGoToDeckBuilder(deckFromCards(cards.map((c) => c.id)))
+      }
+    />
+  ) : (
+    <div className="flex h-full w-full flex-row gap-4 overflow-hidden p-4">
+      <div className="flex flex-col gap-4">
+        <h1>
+          Round {round + 1}/{numRounds} ✦ {numPicks} picks
+        </h1>
+        <button
+          className="border p-1"
+          disabled={numPicked !== numPicks}
+          onClick={gotoNextRound}
+        >
+          Add and go to next round <FontAwesomeIcon icon={faArrowRight} />
+        </button>
+        <div className="flex flex-row flex-wrap gap-4">
+          {boardState.map(({ card, added }, i) => (
+            <Card
+              id={card.id}
+              key={card.id}
+              containerProps={{
+                className:
+                  "relative transform cursor-pointer transition-transform duration-200 hover:scale-[1.02] h-80",
+              }}
+              cardProps={{
+                className: cx("h-full w-auto"),
+                onClick: () => togglePick(i),
+
+                onContextMenu: (e) => {
+                  e.preventDefault();
+                  setPopupCardIndex(i);
+                },
+              }}
             >
-              <Deck cards={playerDeck} fixed title={`Player ${i + 1}`} />
-            </div>
+              {!!added && (
+                <>
+                  <div className="pointer-events-none absolute flex h-full w-full items-center justify-center bg-green-500/50">
+                    <FontAwesomeIcon
+                      icon={faCheck}
+                      size="6x"
+                      color="green"
+                      style={{
+                        stroke: "black",
+                        strokeWidth: "4px",
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+            </Card>
           ))}
         </div>
       </div>
+
+      <div className="flex grow flex-row justify-start gap-4">
+        <div className="flex flex-col border px-1">
+          <Deck cards={addedCards} fixed maxSize={numRounds * numPicks} />
+        </div>
+      </div>
+
+      {popupCardIndex !== -1 && (
+        <CardCloseup
+          cardId={boardState[popupCardIndex].card.id}
+          onClose={() => setPopupCardIndex(-1)}
+          onNavigateNext={navigateNext}
+          onNavigatePrev={navigatePrev}
+        />
+      )}
     </div>
   );
 }

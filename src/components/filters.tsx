@@ -1,15 +1,17 @@
-import { PropsWithChildren, useMemo, useState } from "react";
-import cards, { ICard } from "../resources/cards";
-import sets from "../resources/sets";
+import type { PropsWithChildren} from "react";
+import { useMemo } from "react";
+import cards from "../resources/cards";
 import formats from "../resources/formats";
 import types from "../resources/types";
-import Filter from "./filter";
-import { Filters as FiltersType, filterEnums } from "@/lib/filters";
+import type { Filters, Filters as FiltersType} from "@/lib/filters";
+import { filterEnums } from "@/lib/filters";
 import Slot from "./slot";
+import type { SetStateType} from "@/lib/react-utils";
+import MultiSelect from "./multiSelect";
 
 interface Props {
   filters: FiltersType;
-  setFilters: React.Dispatch<React.SetStateAction<FiltersType>>;
+  setFilters: SetStateType<FiltersType>;
 }
 
 export default function Filters(props: PropsWithChildren<Props>) {
@@ -18,8 +20,8 @@ export default function Filters(props: PropsWithChildren<Props>) {
       Object.values(cards)
         .map((c) => c.hp)
         .filter((c) => c !== undefined)
-        .sort((a, b) => parseInt(a as any) - parseInt(b as any)),
-    [cards],
+        .sort((a, b) => a - b),
+    [],
   );
   const minHp = hps[0]!;
   const maxHp = hps[hps.length - 1]!;
@@ -40,23 +42,23 @@ export default function Filters(props: PropsWithChildren<Props>) {
 
       <div className="flex flex-row items-center gap-2 whitespace-nowrap">
         <span>Format:</span>
-        <select
-          onChange={(e) =>
+        <MultiSelect
+          className="box-border w-40 border p-1"
+          options={Object.values(formats).map((format) => {
+            return {
+              label: format.name,
+              checked: !!props.filters.formats?.includes(format.enumId),
+              value: format.enumId,
+            };
+          })}
+          onChange={(options) => {
             props.setFilters({
               ...props.filters,
-              format: e.currentTarget.value,
-            })
-          }
-          value={props.filters.format || ""}
-          className="border p-1"
-        >
-          <option value="">Any</option>
-          {Object.values(formats).map((format) => (
-            <option key={format.enumId} value={format.enumId}>
-              {format.name}
-            </option>
-          ))}
-        </select>
+              formats: options.filter((o) => o.checked).map((o) => o.value),
+            });
+          }}
+          defaultLabel="All"
+        />
       </div>
 
       <div className="flex flex-row items-center gap-2 whitespace-nowrap">
@@ -128,7 +130,7 @@ export default function Filters(props: PropsWithChildren<Props>) {
               ...props.filters,
               hp: {
                 ...props.filters.hp,
-                comparator: e.currentTarget.value as any,
+                comparator: e.currentTarget.value as Filters['hp']['comparator'],
               },
             })
           }

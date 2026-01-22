@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 
-export default function useIsOnScreen(ref: any) {
+export default function useIsOnScreen(ref: { current: Element }) {
   const [isOnScreen, setIsOnScreen] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
 

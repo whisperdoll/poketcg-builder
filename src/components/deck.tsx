@@ -8,27 +8,32 @@ interface CardSlot {
   amount: number;
 }
 
-type Props =
-  | {
-      cards: CardSlot[];
-      title?: string;
-      setCards: (cards: CardSlot[]) => any;
-      fixed?: false;
-    }
-  | {
-      cards: CardSlot[];
-      title?: string;
-      fixed: true;
-    };
+type BaseProps = {
+  cards: CardSlot[];
+  title?: string;
+  maxSize?: number;
+};
+
+type Props = BaseProps &
+  (
+    | {
+        setCards: (cards: CardSlot[]) => unknown;
+        fixed?: false;
+      }
+    | {
+        fixed: true;
+      }
+  );
 
 export default function Deck(props: Props) {
   const { cards, fixed } = props;
+  const maxSize = props.maxSize || 60;
   const [popupCardId, setPopupCardId] = useState<string | null>(null);
 
   const totalCards = useMemo(() => countDeck(cards), [cards]);
   const sortedCards = useMemo(() => sortDeck(cards), [cards]);
 
-  const title = props.title || `Deck (${totalCards}/60)`;
+  const title = props.title || `Deck (${totalCards}/${maxSize})`;
 
   function add(id: string) {
     if (props.fixed) return;

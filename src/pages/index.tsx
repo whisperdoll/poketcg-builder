@@ -1,19 +1,16 @@
-import Card from "@/components/card";
-import cards from "../resources/cards";
-import sets from "../resources/sets";
 import Filters from "@/components/filters";
-import { useCallback, useEffect, useState } from "react";
-import Deck from "@/components/deck";
+import { useCallback, useRef, useState } from "react";
+import DeckComponent from "@/components/deck";
 import CardGallery from "@/components/cardGallery";
 import { DEFAULT_FILTERS } from "@/lib/filters";
 import ImportExportPopup from "@/components/importExportPopup";
 import useLocalStorage from "@/hooks/useLocalStorage";
-import { addToDeck, CardId, sortDeck } from "@/lib/deck";
-
-type Deck = { cardId: string; amount: number }[];
-type DeckSave = { name: string; cards: Deck; format: string | undefined };
+import type { CardId, Deck, DeckSave } from "@/lib/deck";
+import { addToDeck, sortDeck } from "@/lib/deck";
+import { useSearchParams } from "react-router";
 
 export default function Index() {
+  const [queryParams, setQueryParams] = useSearchParams();
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [deck, _setDeck] = useState<Deck>([]);
   const [currentDeckName, setCurrentDeckName] = useState<string | undefined>(
@@ -27,6 +24,7 @@ export default function Index() {
   const [_favorites, setFavorites] = useLocalStorage<CardId[]>("favorites", []);
   const favorites = _favorites || [];
   const [touched, setTouched] = useState(false);
+  const setInitialDeck = useRef(false);
 
   const setDeck = useCallback(
     (deck: Deck | ((prev: Deck) => Deck), touch: boolean = true) => {
@@ -48,12 +46,6 @@ export default function Index() {
       alert("You need to give the deck a name");
       return;
     }
-
-    if (currentDeckName) {
-    } else {
-    }
-
-    //
 
     const foundIndex = currentDeckName
       ? decks.findIndex((d) => d.name === currentDeckName)
@@ -81,7 +73,7 @@ export default function Index() {
         {
           name: currentDeckEditableName,
           cards: sortDeck(deck),
-          format: filters.format,
+          formats: filters.formats,
         },
       ]);
     } else {
@@ -89,7 +81,7 @@ export default function Index() {
       copy[writeToIndex] = {
         name: currentDeckEditableName,
         cards: sortDeck(deck),
-        format: filters.format,
+        formats: filters.formats,
       };
       setDecks(copy);
     }
@@ -99,7 +91,6 @@ export default function Index() {
   }
 
   function selectDeck(name: string) {
-    // TODO: prompt if touched
     if (touched) {
       const wantsToLeave = confirm(
         "Your current deck has unsaved changes. Are you sure you want to switch decks?",
@@ -108,14 +99,36 @@ export default function Index() {
     }
 
     const foundDeck = decks.find((d) => d.name === name);
+    if (!foundDeck) {
+      // new deck
+      setCurrentDeckName(undefined);
+      setCurrentDeckEditableName("");
+      setDeck([]);
+      setTouched(false);
+      return;
+    }
+
     setCurrentDeckName(name);
     setCurrentDeckEditableName(name);
     setDeck(sortDeck(foundDeck?.cards || []), false);
+
+    const legacyFoundDeck = foundDeck as typeof foundDeck & { format?: string };
+    if (legacyFoundDeck.format && !legacyFoundDeck.formats) {
+      legacyFoundDeck.formats = [legacyFoundDeck.format];
+    }
+
     setFilters({
       ...filters,
-      format: foundDeck?.format,
+      formats: legacyFoundDeck.formats,
     });
     setTouched(false);
+  }
+
+  if (!setInitialDeck.current) {
+    setInitialDeck.current = true;
+    if (queryParams.has("name")) {
+      selectDeck(queryParams.get("name")!);
+    }
   }
 
   return (
@@ -159,7 +172,7 @@ export default function Index() {
           <button className="border p-1" onClick={() => setShowExport(true)}>
             Import / Export
           </button>
-          <Deck cards={deck} setCards={setDeck} />
+          <DeckComponent cards={deck} setCards={setDeck} />
         </div>
         <div className="flex flex-col gap-4">
           <Filters filters={filters} setFilters={setFilters}>

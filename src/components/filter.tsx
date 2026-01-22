@@ -1,6 +1,4 @@
-interface Props {}
-
-export default function Filter(props: Props) {
+export default function Filter() {
   return (
     <div className="flex gap-2 border">
       <select className="border">

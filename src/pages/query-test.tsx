@@ -2,23 +2,20 @@ import CardGallery from "@/components/cardGallery";
 import Filters from "@/components/filters";
 import { DEFAULT_FILTERS } from "@/lib/filters";
 import { Expression } from "@/lib/expression";
-import formats from "@/resources/formats";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 
 export default function QueryTest() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState("<results appear here>");
-
-  useEffect(() => {
+  const results = useMemo(() => {
     const e = new Expression(query);
     try {
       const result = e.parse();
-      setResults(JSON.stringify(result));
+      return JSON.stringify(result);
     } catch (e) {
-      setResults(JSON.stringify(e));
+      return JSON.stringify(e);
     }
   }, [query]);
 

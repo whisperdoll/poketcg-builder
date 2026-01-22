@@ -1,4 +1,5 @@
-import cards, { ICard } from "../resources/cards";
+import type { ICard } from "../resources/cards";
+import allCards from "../resources/cards";
 import sets from "../resources/sets";
 import formats from "../resources/formats";
 
@@ -462,13 +463,16 @@ export const COLUMNS: Record<string, (card: ICard, value: string) => boolean> =
     hp: (card, value) => numericCompare(card.hp, value),
     retreatCost: (card, value) => numericCompare(card.retreatCost, value),
     weakness: (card, value) =>
-      collectionCompare(card.weaknesses?.map((w) => w.type), value),
+      collectionCompare(
+        card.weaknesses?.map((w) => w.type),
+        value,
+      ),
     set: (card, value) => cmp(card.id.split("-")[0], value),
   };
 
 export interface Filters {
   searchText: string;
-  format?: string;
+  formats?: string[];
   superType?: string;
   subType?: string;
   type?: string;
@@ -484,19 +488,26 @@ export const DEFAULT_FILTERS: Filters = {
   favoritesOnly: false,
 };
 
-export function filteredCards(filters: Filters) {
+export function cardMatchesFilters(card: ICard, filters: Filters) {}
+
+export function filteredCards(
+  filters: Filters,
+  cards: ICard[] = Object.values(allCards),
+) {
   const favorites = JSON.parse(
     localStorage.getItem("favorites") || "[]",
   ) as string[];
-  const format = filters.format && formats[filters.format];
+  const filterFormats =
+    filters.formats && filters.formats.map((f) => formats[f]);
   const type = filters.type;
 
-  return Object.values(cards).filter((card) => {
+  return cards.filter((card) => {
     if (filters.favoritesOnly && !favorites.includes(card.id)) return false;
 
     const s = (str: string | number) =>
       str.toString().toLowerCase().replace(/é/g, "e");
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const e = (array: any[] | undefined, ...keys: string[]) => {
       if (!array) return [];
 
@@ -533,10 +544,13 @@ export function filteredCards(filters: Filters) {
     const set = sets[card.id.split("-")[0]];
 
     const matchesFormat =
-      !format ||
-      (!format.excludes.includes(card.id) &&
-        (format.expansions.map((e) => e.toString()).includes(set.id) ||
-          format.includes.includes(card.id)));
+      !filterFormats?.length ||
+      filterFormats.some(
+        (format) =>
+          !format.excludes.includes(card.id) &&
+          (format.expansions.map((e) => e.toString()).includes(set.id) ||
+            format.includes.includes(card.id)),
+      );
 
     const matchesSuperType =
       !filters.superType || cmp(card.superType, filters.superType);

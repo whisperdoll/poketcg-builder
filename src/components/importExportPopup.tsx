@@ -1,10 +1,11 @@
-import { Deck, exportDeck, importDeck } from "@/lib/deck";
+import type { Deck} from "@/lib/deck";
+import { exportDeck, importDeck } from "@/lib/deck";
 import { useEffect, useMemo, useState } from "react";
 
 interface Props {
   deck: Deck;
-  onClose: () => any;
-  onAccept: (deck: Deck) => any;
+  onClose: () => unknown;
+  onAccept: (deck: Deck) => unknown;
 }
 
 export default function ImportExportPopup(props: Props) {

@@ -65,7 +65,7 @@ export function splitmix32(a: number) {
 }
 
 export function shuffle(
-  array: any[],
+  array: unknown[],
   rngGenerator: () => number = Math.random,
 ) {
   let currentIndex = array.length;
@@ -73,7 +73,7 @@ export function shuffle(
   // While there remain elements to shuffle...
   while (currentIndex != 0) {
     // Pick a remaining element...
-    let randomIndex = Math.floor(rngGenerator() * currentIndex);
+    const randomIndex = Math.floor(rngGenerator() * currentIndex);
     currentIndex--;
 
     // And swap it with the current element.
@@ -84,11 +84,42 @@ export function shuffle(
   }
 }
 
-export function shuffled(
-  array: any[],
+export function shuffled<T>(
+  array: T[],
   rngGenerator: () => number = Math.random,
 ) {
   const copy = array.slice(0);
   shuffle(copy, rngGenerator);
+  return copy;
+}
+
+export function pointInRect(
+  point: { x: number; y: number },
+  rectangle: { x: number; y: number; width: number; height: number },
+) {
+  return (
+    point.x >= rectangle.x &&
+    point.x <= rectangle.x + rectangle.width &&
+    point.y >= rectangle.y &&
+    point.y <= rectangle.y + rectangle.height
+  );
+}
+
+export function isInRange(
+  x: number,
+  rangeMin: number,
+  rangeMax: number,
+  minInclusive: boolean = true,
+  maxInclusive: boolean = true,
+) {
+  const minSatisfied = minInclusive ? x >= rangeMin : x > rangeMin;
+  const maxSatisfied = maxInclusive ? x <= rangeMax : x < rangeMax;
+
+  return minSatisfied && maxSatisfied;
+}
+
+export function arrayWithoutIndex<T>(array: T[], index: number) {
+  const copy = array.slice(0);
+  copy.splice(index, 1);
   return copy;
 }

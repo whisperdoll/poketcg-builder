@@ -17,10 +17,10 @@ export interface ICard {
     damage?: string | number;
     text?: string;
   }[];
-  weaknesses?: any[];
-  resistances?: any[];
+  weaknesses?: { type: string; value: string | number }[];
+  resistances?: { type: string; value: string }[];
   energy?: string[][];
-  abilities?: any[];
+  abilities?: { type: string; name: string; text: string }[];
   rarity: string;
   artist?: string;
   text?: string[];

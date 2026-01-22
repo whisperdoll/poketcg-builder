@@ -11,15 +11,15 @@ export default function useLocalStorage<T>(key: string, initialValue?: T) {
       localStorage.setItem(key, JSON.stringify(initialValue));
       return initialValue;
     }
-  }, [localStorage, key, initialValue]);
+  }, [key, initialValue]);
+
+  const [value, setValue] = useState<T | undefined>(getStorageValue());
 
   const setStorageValue = useCallback((value: T | ((oldValue?: T) => T)) => {
     const resolvedValue = isFunction(value) ? value(getStorageValue()) : value;
     localStorage.setItem(key, JSON.stringify(resolvedValue));
     setValue(resolvedValue);
-  }, []);
-
-  const [value, setValue] = useState<T | undefined>(getStorageValue());
+  }, [key, getStorageValue]);
 
   useEffect(() => {
     const onStorage = () => setValue(getStorageValue());

@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@layer base {
+  * {
+    @apply border-gray-400;
+  }
+
+  button {
+    @apply cursor-pointer;
+  }
+}
+
+@custom-variant hover (&:hover);

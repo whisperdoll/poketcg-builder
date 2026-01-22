@@ -1,13 +1,14 @@
 import { useMemo } from "react";
 import cards from "../resources/cards";
-import sets from "../resources/sets";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faAdd, faMinus } from "@fortawesome/free-solid-svg-icons";
 
-interface Props extends Record<string, any> {
+interface Props extends Record<string, unknown> {
   cardId: string;
   amount: number;
-  add?: () => any;
-  remove?: () => any;
-  onClick?: (e: React.MouseEvent<Element, MouseEvent>) => any;
+  add?: () => unknown;
+  remove?: () => unknown;
+  onClick?: (e: React.MouseEvent<Element, MouseEvent>) => unknown;
 }
 
 export default function DeckCard(props: Props) {
@@ -32,13 +33,13 @@ export default function DeckCard(props: Props) {
       <div className="ml-auto flex gap-1">
         <span>x{amount}</span>
         {remove && (
-          <button className="border px-1" onClick={() => remove()}>
-            -
+          <button className="border w-6" onClick={() => remove()}>
+            <FontAwesomeIcon icon={faMinus} size="2xs" />
           </button>
         )}
         {add && (
-          <button className="border px-1" onClick={() => add()}>
-            +
+          <button className="border w-6" onClick={() => add()}>
+            <FontAwesomeIcon icon={faAdd} size="2xs" />
           </button>
         )}
       </div>

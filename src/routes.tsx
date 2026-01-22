@@ -1,10 +1,11 @@
-import { lazy, Suspense } from "react";
-import { type RouteObject } from "react-router-dom";
+import { lazy, Suspense } from 'react';
+import type { RouteObject } from 'react-router';
 
-const Index = lazy(() => import("@/pages/index"));
-const DraftSetup = lazy(() => import("@/pages/draft-setup"));
-const Draft = lazy(() => import("@/pages/draft"));
-const Notfound = lazy(() => import("@/pages/404"));
+const Index = lazy(() => import('./pages/index'));
+const DraftSetup = lazy(() => import('./pages/draft-setup'));
+const Draft = lazy(() => import('./pages/draft'));
+const Notfound = lazy(() => import('./pages/404'));
+const Battle = lazy(() => import('./pages/battle'));
 
 export const routes: Array<RouteObject> = [
   {
@@ -16,7 +17,15 @@ export const routes: Array<RouteObject> = [
     ),
   },
   {
-    path: "draft",
+    path: 'battle',
+    element: (
+      <Suspense>
+        <Battle />
+      </Suspense>
+    ),
+  },
+  {
+    path: 'draft-setup',
     element: (
       <Suspense>
         <DraftSetup />
@@ -24,7 +33,7 @@ export const routes: Array<RouteObject> = [
     ),
   },
   {
-    path: "draft/:format/:seed",
+    path: 'draft',
     element: (
       <Suspense>
         <Draft />
@@ -32,7 +41,7 @@ export const routes: Array<RouteObject> = [
     ),
   },
   {
-    path: "*",
+    path: '*',
     element: (
       <Suspense>
         <Notfound />

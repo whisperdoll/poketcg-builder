@@ -1,44 +1,55 @@
-import { useWindowSize } from "usehooks-ts";
 import AutoSizer from "react-virtualized-auto-sizer";
-import {
-  FixedSizeGrid as Grid,
-  GridItemKeySelector,
-  areEqual,
-} from "react-window";
+import type { GridItemKeySelector } from "react-window";
+import { FixedSizeGrid as Grid, areEqual } from "react-window";
 import memoize from "memoize-one";
 
-import cards, { ICard } from "../resources/cards";
-import sets from "../resources/sets";
-import Card from "./card";
-import { Filters, filteredCards as filterCards } from "@/lib/filters";
-import { memo, useMemo, useState } from "react";
+import type { ICard } from "../resources/cards";
+import Card, { type CardProps } from "./card";
+import type { Filters } from "@/lib/filters";
+import { filteredCards as filterCards } from "@/lib/filters";
+import { memo, useMemo, useState, type CSSProperties } from "react";
 import CardCloseup from "./cardCloseup";
+import cx from "@/lib/cx";
 
 const cardWidth = 225;
 const cardHeight = 314;
 
 interface Props {
   filters: Filters;
-  addCard?: (cardId: string) => any;
+  addCard?: (cardId: string, index: number) => unknown;
+  cards?: ICard[];
+  cardProps?: (
+    card: ICard,
+    index: number,
+  ) => React.PropsWithRef<React.PropsWithChildren<CardProps>>;
 }
 
 interface GalleryCardProps {
   columnIndex: number;
   rowIndex: number;
-  style: any;
+  style: CSSProperties;
   data: {
     columnCount: number;
     onClick: (
       e: React.MouseEvent<HTMLImageElement, MouseEvent>,
       cardId: string,
-    ) => any;
+      index: number,
+    ) => unknown;
     filteredCards: ICard[];
+    cardProps?: (
+      card: ICard,
+      index: number,
+    ) => React.PropsWithRef<React.PropsWithChildren<CardProps>>;
   };
 }
 
 const GalleryCard = memo((props: GalleryCardProps) => {
   const index = props.rowIndex * props.data.columnCount + props.columnIndex;
   const card = props.data.filteredCards[index];
+  const { containerProps, cardProps, ...restCardProps } = props.data.cardProps
+    ? props.data.cardProps(card, index)
+    : { containerProps: {}, cardProps: {} };
+
   return card ? (
     <div
       style={{ ...props.style }}
@@ -46,13 +57,21 @@ const GalleryCard = memo((props: GalleryCardProps) => {
     >
       <Card
         id={card.id}
-        onClick={(e) => props.data.onClick(e, card.id)}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          props.data.onClick(e, card.id);
+        containerProps={{
+          ...containerProps,
+          className: cx("hover", containerProps?.className),
         }}
-        containerClassName="transform cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
-        cardProps={{ width: cardWidth, height: cardHeight }}
+        cardProps={{
+          onClick: (e) => props.data.onClick(e, card.id, index),
+          onContextMenu: (e) => {
+            e.preventDefault();
+            props.data.onClick(e, card.id, index);
+          },
+          width: cardWidth,
+          height: cardHeight,
+          ...cardProps,
+        }}
+        {...restCardProps}
       />
     </div>
   ) : null;
@@ -63,24 +82,30 @@ const itemKey: GridItemKeySelector<{
   onClick: (
     e: React.MouseEvent<HTMLImageElement, MouseEvent>,
     cardId: string,
-  ) => any;
+  ) => unknown;
   filteredCards: ICard[];
+  cardProps?: (
+    card: ICard,
+  ) => React.PropsWithRef<React.PropsWithChildren<CardProps>>;
 }> = ({ columnIndex, rowIndex, data }) => {
   const index = rowIndex * data.columnCount + columnIndex;
   const card = data.filteredCards[index];
   return card ? card.id : index;
 };
 
-const createItemData = memoize((columnCount, onClick, filteredCards) => ({
-  columnCount,
-  onClick,
-  filteredCards,
-}));
+const createItemData = memoize(
+  (columnCount, onClick, filteredCards, cardProps) => ({
+    columnCount,
+    onClick,
+    filteredCards,
+    cardProps,
+  }),
+);
 
 export default function CardGallery(props: Props) {
   const filteredCards = useMemo(
-    () => filterCards(props.filters),
-    [cards, props.filters],
+    () => filterCards(props.filters, props.cards),
+    [props.filters, props.cards],
   );
   const numCards = filteredCards.length;
   const [popupCardId, setPopupCardId] = useState<string | null>(null);
@@ -88,10 +113,11 @@ export default function CardGallery(props: Props) {
   function onClick(
     e: React.MouseEvent<HTMLImageElement, MouseEvent>,
     cardId: string,
+    index: number,
   ) {
     if (e.button === 0) {
       if (props.addCard) {
-        props.addCard(cardId);
+        props.addCard(cardId, index);
       } else {
         setPopupCardId(cardId);
       }
@@ -139,6 +165,7 @@ export default function CardGallery(props: Props) {
               cardsThatFit,
               onClick,
               filteredCards,
+              props.cardProps,
             );
 
             return (

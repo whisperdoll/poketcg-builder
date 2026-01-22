@@ -1,32 +1,26 @@
+import "./lib/prototypes.ts";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import {
-  createBrowserRouter,
-  createHashRouter,
-  RouterProvider,
-} from "react-router-dom";
-import routes from "@/routes";
-import App from "@/App";
-import "@/global";
+import "./index.css";
+import App from "./App.tsx";
+import { createHashRouter, RouterProvider } from "react-router";
+import routes from "./routes.tsx";
 
-const container = document.getElementById("root") as HTMLElement;
-
-const root = createRoot(container);
-
-const router = (window.r = createHashRouter(
+const router = createHashRouter(
   [
     {
       path: "/",
       element: <App />,
       children: routes,
       errorElement: <div>error</div>,
+      hydrateFallbackElement: <div>Loading...</div>,
     },
   ],
   { basename: "/" },
-));
+);
 
-root.render(
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <RouterProvider router={router} fallbackElement={<div>loading...</div>} />
+    <RouterProvider router={router} />
   </StrictMode>,
 );

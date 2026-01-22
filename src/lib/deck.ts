@@ -1,4 +1,4 @@
-import cards, { ICard } from "../resources/cards";
+import cards, { type ICard } from "../resources/cards";
 import sets from "../resources/sets";
 
 export type CardId = string;
@@ -9,6 +9,11 @@ interface CardSlot {
 }
 
 export type Deck = CardSlot[];
+export type DeckSave = {
+  name: string;
+  cards: Deck;
+  formats: string[] | undefined;
+};
 
 export function sortDeck(deck: Deck) {
   return deck.sort((a, b) => a.cardId.localeCompare(b.cardId));
@@ -61,14 +66,33 @@ export function countDeck(deck: Deck) {
   return deck.reduce((acc, card) => acc + card.amount, 0);
 }
 
-export function addToDeck(deck: Deck, cardId: string): Deck {
-  const existing = deck.some((c) => c.cardId === cardId);
+export function addToDeck(deck: Deck, ...cards: string[] | ICard[]): Deck {
+  let ret = deck.slice(0);
 
-  if (existing) {
-    return deck.map((c) =>
-      c.cardId === cardId ? { cardId, amount: c.amount + 1 } : c,
-    );
-  } else {
-    return [...deck, { cardId, amount: 1 }];
-  }
+  cards.forEach((card) => {
+    const cardId = typeof card === "string" ? card : card.id;
+    const existing = deck.some((c) => c.cardId === cardId);
+
+    if (existing) {
+      ret = ret.map((c) =>
+        c.cardId === cardId ? { cardId, amount: c.amount + 1 } : c,
+      );
+    } else {
+      ret = [...ret, { cardId, amount: 1 }];
+    }
+  });
+
+  return ret;
+}
+
+export function deckFromCards(cards: string[] | ICard[]): Deck {
+  return addToDeck([], ...cards);
+}
+
+export function cardsFromDeck(deck: Deck): CardId[] {
+  const ret: CardId[] = [];
+  deck.forEach((cs) => {
+    cs.amount.times((_) => ret.push(cs.cardId));
+  });
+  return ret;
 }

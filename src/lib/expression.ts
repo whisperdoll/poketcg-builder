@@ -1,4 +1,4 @@
-import { ICard } from "@/resources/cards";
+import type { ICard } from "@/resources/cards";
 
 export interface StringToken {
   type: "stringLiteral";
@@ -13,7 +13,7 @@ export interface NumberToken {
 export interface FunctionToken {
   type: "function";
   name: string;
-  arg?: any;
+  arg?: unknown;
 }
 
 export interface ExpressionToken {
@@ -84,7 +84,7 @@ export class Expression {
   level: number;
   cursorOffset: number;
 
-  log(...messages: any[]) {
+  log(...messages: unknown[]) {
     let indent = "";
     for (let i = 0; i < this.level; i++) {
       indent += "  ";
@@ -103,7 +103,7 @@ export class Expression {
   }
 
   test(value: RegExp) {
-    let passedString = value.toString();
+    const passedString = value.toString();
 
     let newRegex = value;
     if (passedString[0] !== "^") {
@@ -178,7 +178,7 @@ export class Expression {
 
   parse(): ExpressionToken {
     this.log("= starting parse expression");
-    let chain: Token[] = [];
+    const chain: Token[] = [];
     while (true) {
       this.optionallyConsume(/\s+/);
       this.log(
@@ -236,7 +236,7 @@ export class Expression {
   }
 
   consumeSelector(): SelectorToken {
-    const subject = this.optionallyConsume(/[\*\$\?]/);
+    const subject = this.optionallyConsume(/[*$?]/);
     const chain: string[] = [];
     while (true) {
       const dot = this.optionallyConsume(/\./);
@@ -254,7 +254,7 @@ export class Expression {
       return this.consumeParenthesizedExpression();
     } else if (this.peek() === '"') {
       this.log("> string");
-      const string = this.consume(/\"[^\"]*\"/);
+      const string = this.consume(/"[^"]*"/);
       return { type: "stringLiteral", value: string };
     } else if (/[0-9]/.test(this.peek())) {
       this.log("> number");
@@ -268,7 +268,7 @@ export class Expression {
         exprToken = this.consumeParenthesizedExpression();
       }
       return { type: "function", name: functionName, arg: exprToken };
-    } else if (this.test(/-?[\*\$\?]?[\.].+/)) {
+    } else if (this.test(/-?[*$?]?[.].+/)) {
       const assertions: AssertionToken[] = [];
 
       while (true) {
@@ -398,6 +398,7 @@ function evaluateExpression(
   const first = pop("compoundAssertion", "expression");
 
   if (first.type === "compoundAssertion") {
+    // meow
   }
 
   const operator = pop("operator");

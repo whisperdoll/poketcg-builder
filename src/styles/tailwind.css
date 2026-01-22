@@ -1,3 +1,33 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  .battleMat {
+    position: relative;
+    background-image: url("/poketcg-builder/src/resources/playmat.png");
+    background-position: center;
+    background-size: cover;
+  }
+
+  .battleMat::before {
+    z-index: 0;
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    backdrop-filter: brightness(0.4);
+  }
+
+  .battleMat * {
+    z-index: 1;
+  }
+
+  .sideways {
+    text-orientation: sideways;
+    writing-mode: vertical-lr;
+    rotate: 180deg;
+  }
+}
