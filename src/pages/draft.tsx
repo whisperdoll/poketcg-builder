@@ -199,8 +199,7 @@ export default function Draft() {
               id={card.id}
               key={card.id}
               containerProps={{
-                className:
-                  "relative transform cursor-pointer transition-transform duration-200 hover:scale-[1.02] h-80",
+                className: "relative hover h-80",
               }}
               cardProps={{
                 className: cx("h-full w-auto"),
